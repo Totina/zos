@@ -118,6 +118,6 @@ void assign_clusters(FS *fs, PSEUDO_INODE *inode);
 bool is_absolute_path(char *path);
 
 // main
-int commands(FS *fs, char *token);
+void commands(FS *fs, char *token);
 
 #endif

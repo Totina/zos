@@ -18,12 +18,14 @@ void print_working_directory(FS *fs);
 void print_info(FS *fs, char *path);
 void file_out(FS *fs, char *token);
 void load_file_with_commands(FS *fs, char *token);
-FS *file_formatting(char *tok, char *filename, char *signature, char *descriptor);
+FS *format_fs(char *token, char *filename, char *signature, char *descriptor);
 
-int handle_B(char *size, int size_digits);
-int index_of_last_digit(char *size);
+int handle_bytes(char *size, int size_digits);
+int index_of_last_digit(char *number);
 
 void create_slink(FS *fs, char *path);
+
+void print_help();
 
 
 #endif //ZOS_COMMANDS_H

@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 
     // initialize FS
     FS *fs = NULL;
-    fs = fs_init(name, SIGNATURE, DESCRIPTOR, DISK_SIZE, 0);
+    fs = fs_init(name, SIGNATURE, DESCRIPTOR, DISK_SIZE, 1);
 
     // command from user
     char command[MAX_COMMAND_LENGTH];
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
  * Handles commands from user.
  *
  */
-int commands(FS *fs, char *token) {
+void commands(FS *fs, char *token) {
     // incp - nahraje soubor s1 z pevného disku do umístění s2 v pseudoNTFS
     if (strcmp(token, FILE_IN) == 0) {
         file_in(fs, token);
@@ -94,10 +94,12 @@ int commands(FS *fs, char *token) {
     // cp - copy file
     else if (strcmp(token, COPY_FILE) == 0) {
         copy_file(fs, token);
+        update_current_directory(fs);
     }
-    // mv - move file                       TO DO: change name
+    // mv - move file
     else if (strcmp(token, MOVE_FILE) == 0) {
         move_file(fs, token);
+        update_current_directory(fs);
     }
     // cd - change directory
     else if (strcmp(token, CHANGE_DIRECTORY) == 0) {
@@ -124,7 +126,7 @@ int commands(FS *fs, char *token) {
     }
     // format
     else if (strcmp(token, FORMAT) == 0) {
-        FS *new_fs = file_formatting(token, FILENAME, SIGNATURE, DESCRIPTOR);
+        FS *new_fs = format_fs(token, FILENAME, SIGNATURE, DESCRIPTOR);
         if (new_fs != NULL) {
             fs = new_fs;
         }
@@ -145,7 +147,7 @@ int commands(FS *fs, char *token) {
     }
     // print help
     else if(are_strings_equal(token, HELP) == true) {
-        //print_help(fs);
+        print_help(fs);
     }
     else {
         printf("Command not found.");

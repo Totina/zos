@@ -355,28 +355,24 @@ void set_path_to_root(FS *fs) {
 }
 
 /**
- * Funkce, která vrátí z řetězce absolutní cestu k souboru
+ * Vrátí absolutní cestu k souboru.
  *
  * @param fs - struktura file systému
- * @param path cesta relativní k dané složce ve které jsem
+ * @param path - relativní cesta
  */
 char *get_absolute_path(FS *fs, char *path) {
     char *temp_path = calloc(PATH_MAX, sizeof(char));
 
     if (strlen(path) > 0 && path[strlen(path) - 1] == '\n'){
-        path[strlen(path) - 1] = '\0'; //dosadit na konec cesty ukoncovací znak, místo '\n'
+        path[strlen(path) - 1] = '\0';
     }
 
     if(is_absolute_path(path) == true){
-        //absolutni cesta
-        //nechám být
-        //printf("Zadana absolutni cesta od rootu \n");
+        // absolute path
         strcpy(temp_path, path);
 
     } else {
-        //relativni cesta od daneho adresare
-        //pridam cestu do aktualni cesty
-        //  printf("nebyla zadana absolutni cesta od rootu - pridat cestu od rootu ke slozce kde jsem \n");
+        // relative path - adding path to the current directory
         strcpy(temp_path, fs -> actual_path);
 
         if (strlen(path) > 0 && path[0] != 47) {

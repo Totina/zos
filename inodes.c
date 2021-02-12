@@ -149,9 +149,9 @@ void read_inodes_from_file(FS *fs) {
 }
 
 /**
- * Funkce, která vytiskne na obrazovku inode - informace, vlastnosti o něm.
+ * Vypíše informace o i-nodu.
  *
- * @param inode vypisující inode
+ * @param inode
  */
 void print_inode(PSEUDO_INODE *inode) {
     printf("Id: %d, ", inode->node_id);
@@ -184,9 +184,9 @@ void print_inode(PSEUDO_INODE *inode) {
 }
 
 /**
- * Funkce, která vytiskne na obrazovku struktur inodes - všechny inody
+ * Vypíše strukturu i-nodes.
  *
- * @param inodes vypisující struktura
+ * @param inodes
  */
 void print_inodes(INODES *inodes) {
     printf("--- INODES ---\n");
@@ -418,14 +418,18 @@ bool are_strings_equal(char *string1, char *string2) {
 }
 
 /**
- * Funkce, která zjistí jestli se v daném řetězci vyskytuje znak
+ * Vrátí, zda se v řetězci vyskytuje znak.
+ *
  * @param string - řetězec
- * @param pattern  znak
- * @return true - ano, false - ne
+ * @param pattern - znak
+ * @return  true - ano
+ *          false - ne
  */
 bool contains_char(char *string, char pattern) {
     for (int i = 0; i < strlen(string); i++){
-        if(string[0] == pattern) return true;
+        if(string[0] == pattern) {
+            return true;
+        }
     }
     return  false;
 }
@@ -603,10 +607,11 @@ void write_clusters_to_file(FS *fs, PSEUDO_INODE *new_inode, int32_t *clusters, 
 }
 
 /**
- * Funkce ,k terá vrátí cestu k nadřazenému inodu - k parentovi
- *  - dojde k odříznutí posledního slova
- * @param path aktuaální cesta ze které chci najít cestu k parentovi
- * @return
+ * Vrátí cestu k rodičovskému inodu.
+ *
+ * @param path aktuaální cesta
+ *
+ * @return cesta k rodiči
  */
 char *get_path_to_parent(char *path){
     char *temp_path_to_parent = calloc(PATH_MAX, sizeof(char));
@@ -693,19 +698,15 @@ PSEUDO_INODE *get_parent_inode(FS *fs, PSEUDO_INODE *inode) {
 }
 
 /**
+ *  Inicializuje symbolický link.
  *
+ * @param fs - struktura file systému
+ * @param id_node - id i-nodu
+ * @param parent_id - id rodičovského i-nodu
+ * @param linked_id - id i-nodu, na který vytváříme link
+ * @param directs - pole directs
  *
- * @param fs
- * @param id_node
- * @param parent_id
- * @param isFree
- * @param isDirectory
- * @param file_size
- * @param count_clusters
- * @param directs
- * @param indirect1
- * @param indirect2
- * @return
+ * @return strukturu i-nodu
  */
 PSEUDO_INODE * init_slink(FS *fs, int32_t id_node, int32_t parent_id, int32_t linked_id,
                           int32_t directs[COUNT_DIRECT_LINK]) {

@@ -152,7 +152,7 @@ void write_directory_items_to_file(FS *fs, DIRECTORY_ITEMS *items, PSEUDO_INODE 
 }
 
 /**
- * Přečte ze souboru file systému strukturu directory_items naplněnou příslušnými soubory.
+ * Přečte ze souboru file systému strukturu directory_items naplněnou příslušnými soubory a vrátí ji.
  *
  * @param fs - struktura file systému
  * @param inode - i-node directory item, který čteme
@@ -203,7 +203,8 @@ DIRECTORY_ITEMS *read_directory_items_from_file(FS *fs, PSEUDO_INODE *inode) {
 }
 
 /**
- * Funkce, která vypéše celou naplněno ustrukturu directory_items
+ * Vypíše directory_items.
+ *
  * @param items directory_items
  */
 void print_directory_items(DIRECTORY_ITEMS *items) {
@@ -216,7 +217,8 @@ void print_directory_items(DIRECTORY_ITEMS *items) {
 }
 
 /**
- * Funkce, která vypíše položku v directory_items
+ * Vypíše jeden directory_item.
+ *
  * @param item directory_item
  */
 static void print_directory_item(DIRECTORY_ITEM *item) {
@@ -224,13 +226,14 @@ static void print_directory_item(DIRECTORY_ITEM *item) {
 }
 
 /**
- * Vytvoří soubor v našem sytému, který bude obsahovat data, která jsou v souboru source_file
+ * Vytvoří soubor ve FS s daty ze souboru source_file.
  *
  * @param fs - struktura file systému
- * @param source_file soubor, který chceme přesunout do našeh systému
+ * @param source_file - soubor, který přesouváme do FS
  * @param filename  jméno souboru
- * @param dest_inode - inod, představující diretcory_item do kterého chceme soubor vytvořit
- * @return true - povedlo-li se, naopak je false
+ * @param dest_inode - i-node, kam soubor ukládáme
+ * @return  true - úspěšné provedení
+ *          false - jindy
  */
 bool create_file_in_FS(FS *fs, FILE *source_file, char *filename, PSEUDO_INODE *dest_inode) {
     // get file size
@@ -364,13 +367,15 @@ bool create_file_in_FS(FS *fs, FILE *source_file, char *filename, PSEUDO_INODE *
 }
 
 /**
+ * Vytvoří symbolický link na soubor source_file.
  *
+ * @param fs - struktura file systému
+ * @param source_file - soubor, na který tvoříme link
+ * @param filename - jméno linku
+ * @param dest_inode - i-node, kde link zakládáme
  *
- * @param fs
- * @param source_file
- * @param filename
- * @param dest_inode
- * @return
+ * @return  true - úspěch
+ *          false - neúspěch
  */
 bool create_s_link(FS *fs, char *filename, char *linked_file_name, PSEUDO_INODE *dest_inode) {
 
@@ -409,7 +414,6 @@ bool create_s_link(FS *fs, char *filename, char *linked_file_name, PSEUDO_INODE 
     for (int i = 0; i < COUNT_DIRECT_LINK; i++) {
             directs[i] = -1;
     }
-
 
     // initialize new i-node
     new_inode = init_slink(fs, new_inode->node_id, dest_inode->node_id, linked_file_node_id, directs);
@@ -473,9 +477,9 @@ void add_item_to_directory(FS *fs, DIRECTORY_ITEMS *items, PSEUDO_INODE *inode, 
 }
 
 /**
- * Funkce, která uvolnuje pamět alokovanému polpoly v directory_item
+ * Uvolní paměť alokovanou pro directory_items.
  *
- * @param items pole directory_items, které chceme uvolnit
+ * @param items - directory_items k uvolnění
  */
 void free_directory_items(DIRECTORY_ITEMS *items){
     free(items);

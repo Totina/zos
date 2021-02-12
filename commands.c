@@ -1,6 +1,3 @@
-//
-// Created by terez on 2/10/2021.
-//
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -348,7 +345,7 @@ void remove_file_or_directory(FS *fs, char *path, bool isDirectory) {
  * Zkopíruje soubor do složky.
  *
  * @param fs - struktura file systému
- * @param token parametry funkce
+ * @param token - argumenty příkazu
  */
 void copy_file(FS *fs, char *token) {
     // get arguments
@@ -539,18 +536,17 @@ void copy_file(FS *fs, char *token) {
 }
 
 /**
- * Funkce, která přesune soubor do složky systému
+ * Přesune soubor do zadané složky.
  *
  * @param fs - struktura file systému
- * @param token - výchozí a cílová cesta
+ * @param token - argumenty příkazu - výchozí a cílová cesta
  */
 void move_file(FS *fs, char *token) {
     char *src_path = strtok(NULL, SPLIT_ARGS_CHAR);
     char *dest_path = strtok(NULL, SPLIT_ARGS_CHAR);
 
     // get source i-node
-    PSEUDO_INODE *src_inode = NULL;
-    src_inode = get_inode(fs, src_path, 0);
+    PSEUDO_INODE *src_inode = get_inode(fs, src_path, 0);
     if (src_inode == NULL) {
         return;
     }
@@ -562,10 +558,21 @@ void move_file(FS *fs, char *token) {
     PSEUDO_INODE *dest_inode = NULL;
     dest_inode = get_inode(fs, dest_path, 1);
     if (dest_inode == NULL) {
-        // TO DO: change name
+        // TO DO: RENAME FILE
         printf("New name: %s\n", dest_path);
 
+        PSEUDO_INODE *parent = get_parent_inode(fs, src_inode);
+        DIRECTORY_ITEMS *items = read_directory_items_from_file(fs, parent);
 
+        for (int i = 0; i < items->size; ++i) {
+            if (items->data[i].node_id == src_inode->node_id) {
+                strcpy(items->data[i].item_name, dest_path);
+            }
+        }
+        write_directory_items_to_file(fs, items, parent);
+        // write to file
+        write_inodes_to_file(fs);
+        write_bitmap_to_file(fs);
 
         return;
     }
@@ -600,7 +607,7 @@ void move_file(FS *fs, char *token) {
 }
 
 /**
- *  Změní aktuální pracovní adresář, ve kterém se nacházíme.
+ * Změní aktuální pracovní adresář, ve kterém se nacházíme.
  *
  * @param fs - struktura file systému
  * @param path - cesta k adresáři
@@ -728,7 +735,7 @@ void print_info(FS *fs, char *path) {
  * Zkopíruje soubor z FS na pevný disk.
  *
  * @param fs - struktura file systému
- * @param token
+ * @param token - argumenty příkazu
  */
 void file_out(FS *fs, char *token) {
     char *src_file = strtok(NULL, SPLIT_ARGS_CHAR);
@@ -839,7 +846,7 @@ void file_out(FS *fs, char *token) {
  * Načte soubor s příkazy a vykoná je.
  *
  * @param fs - struktura file systému
- * @param token - cestak  souboru
+ * @param token - cesta k  souboru
  */
 void load_file_with_commands(FS *fs, char *token) {
     token = strtok(NULL, SPLIT_ARGS_CHAR);
@@ -861,11 +868,11 @@ void load_file_with_commands(FS *fs, char *token) {
         return;;
     }
 
-    fclose(fs->FILE);
+    //fclose(fs->FILE);
 
     char buffer[256];
     // -1 to allow room for NULL terminator for really long string
-    while (fgets(buffer, 256 - 1, fp)) {
+    while (fgets(buffer, 255, fp)) {
         buffer[strcspn(buffer, "\n")] = 0;
         printf("%s\n", buffer);
 
@@ -886,22 +893,24 @@ void load_file_with_commands(FS *fs, char *token) {
 /**
  * Naformátuje systém.
  *
- * @param tok parametry příkazu format
- * @param filename název systému
+ * @param token argumentz příkazu format
+ * @param filename název file systému
  * @param signature jméno uživatele
  * @param descriptor informace o systému
- * @return VFS struktura ytvořená
+ *
+ * @return FS struktura
  */
-FS *file_formatting(char *tok, char *filename, char *signature, char *descriptor) {
-    tok = strtok(NULL, SPLIT_ARGS_CHAR);
-    if (tok == NULL) {
+FS *format_fs(char *token, char *filename, char *signature, char *descriptor) {
+    token = strtok(NULL, SPLIT_ARGS_CHAR);
+    if (token == NULL) {
         printf("CANNOT CREATE FILE\n");
         return NULL;
     }
-    int length = index_of_last_digit(tok);
+
+    int length = index_of_last_digit(token);
     char number[length + 1];
     memset(number, 0, length + 1);
-    strncpy(number, tok, length);
+    strncpy(number, token, length);
     if (number[0] == 0) {
         printf("CANNOT CREATE FILE\n");
         return NULL;
@@ -910,15 +919,15 @@ FS *file_formatting(char *tok, char *filename, char *signature, char *descriptor
         return NULL;
     }
 
-    int real_size = (strlen(tok) - length) - 1;
+    int real_size = (strlen(token) - length) - 1;
     char multiple[real_size];
 
     int j = 0;
-    for (int i = length; i < strlen(tok) - 1; i++) {
-        multiple[j] = tok[i];
+    for (int i = length; i < strlen(token) - 1; i++) {
+        multiple[j] = token[i];
         j++;
     }
-    int real_number = handle_B(multiple, real_size);
+    int real_number = handle_bytes(multiple, real_size);
     int disk_size = atoi(number) * real_number;
     if (disk_size <= 0) {
         printf("CANNOT CREATE FILE\n");
@@ -942,7 +951,7 @@ FS *file_formatting(char *tok, char *filename, char *signature, char *descriptor
  *
  * @return násobek
  */
-int handle_B(char *size, int size_digits) {
+int handle_bytes(char *size, int size_digits) {
     int multiple_number = 1;
     char unit[size_digits];
     strncpy(unit, size, size_digits);
@@ -963,12 +972,12 @@ int handle_B(char *size, int size_digits) {
                     multiple_number = 1;
                     break;
                 default:
-                    printf("Wrong unit, using only B [Bytes]\n");
+                    printf("Wrong unit.\n");
                     break;
             }
             break;
         default:
-            printf("Wrong unit, using only B [Bytes]\n");
+            printf("Wrong unit.\n");
             break;
     }
 
@@ -976,18 +985,18 @@ int handle_B(char *size, int size_digits) {
 }
 
 /**
- * Vrátí delku čísla.
+ * Vrátí delku čísla v řetězci, resp. index poslední číslice v řetězci.
  *
- * @param size - velikost
+ * @param number - řetězec znaků
  *
  * @return délka řetězce číslic
  */
-int index_of_last_digit(char *size) {
-    char str[strlen(size)];
-    strcpy(str, size);
+int index_of_last_digit(char *number) {
+    char tmp[strlen(number)];
+    strcpy(tmp, number);
 
     int index = 0;
-    while(isdigit(str[index])) {
+    while(isdigit(tmp[index])) {
         index++;
     }
 
@@ -997,8 +1006,8 @@ int index_of_last_digit(char *size) {
 /**
  * Vytvoří symbolický link na soubor.
  *
- * @param fs
- * @param path
+ * @param fs - struktura file systému
+ * @param token - argumenty příkazu
  */
 void create_slink(FS *fs, char *token) {
     char source_filename[MAX_FILENAME_LENGTH];  // name of the file we want to link to
@@ -1016,7 +1025,7 @@ void create_slink(FS *fs, char *token) {
     }
     strcpy(source_filename, token);
 
-    printf("Creating link to file: %s", source_filename);
+    //printf("Creating link to file: %s", source_filename);
 
     // get second argument
     token = strtok(NULL, SPLIT_ARGS_CHAR);
@@ -1028,7 +1037,7 @@ void create_slink(FS *fs, char *token) {
         token[strlen(token) - 1] = '\0';
     }
     strcpy(link_name, token);
-    printf("Creating link with name: %s", link_name);
+    //printf("Creating link with name: %s", link_name);
 
     // destination
     destination_inode = fs->current_inode;
@@ -1042,4 +1051,29 @@ void create_slink(FS *fs, char *token) {
 
     // print result
     printf("OK\n");
+}
+
+/**
+ * Vypíše všechny existující příkazy na obrazovku.
+ */
+void print_help() {
+    printf("\n--- Commands ---\n");
+    printf("%s - Copy file (%s s1 s2)\n", COPY_FILE, COPY_FILE);
+    printf("%s - Move file (%s s1 s2)\n", MOVE_FILE, MOVE_FILE);
+    printf("%s - Remove file (%s s1)\n", REMOVE_FILE, REMOVE_FILE);
+    printf("%s - Make directory (%s a1)\n", MAKE_DIRECTORY, MAKE_DIRECTORY);
+    printf("%s - Remove empty directory (%s a1)\n", REMOVE_EMPTY_DIRECTORY, REMOVE_EMPTY_DIRECTORY);
+    printf("%s - Print directory (%s a1)\n", PRINT_DIRECTORY, PRINT_DIRECTORY);
+    printf("%s - Print file (%s s1)\n", PRINT_FILE, PRINT_FILE);
+    printf("%s - Change directory (%s s1)\n", CHANGE_DIRECTORY, CHANGE_DIRECTORY);
+    printf("%s - Print working directory (%s)\n", PRINT_WORKING_DIRECTORY, PRINT_WORKING_DIRECTORY);
+    printf("%s - Print info about file or directory (%s s1/a1)\n", INFO, INFO);
+    printf("%s - Copy file from HD to FS (%s s1 s2)\n", FILE_IN, FILE_IN);
+    printf("%s - Copy file from FS to HD (%s s1 s2)\n", FILE_OUT, FILE_OUT);
+    printf("%s - Load commands from file (%s s1)\n", LOAD_COMMANDS, LOAD_COMMANDS);
+    printf("%s - Format file system (%s 600MB)\n", FORMAT, FORMAT);
+    printf("%s - Create symbolic link (%s s1 s2)\n", S_LINK, S_LINK);
+
+    printf("%s - Print file system (%s)\n", PRINT_FS, PRINT_FS);
+    printf("%s - Quit (%s)\n\n", QUIT, QUIT);
 }
